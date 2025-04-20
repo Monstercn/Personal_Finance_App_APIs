@@ -1,6 +1,6 @@
 package com.JHU.controllers;
 
-import com.JHU.models.Course;
+import com.JHU.models.Expense;
 import com.JHU.models.Registrar;
 import com.JHU.models.Students;
 import org.springframework.http.HttpStatus;
@@ -19,19 +19,19 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-//import javax.validation.Valid;
+import javax.validation.Valid;
 
 
 @RestController
 public class RegistrationController {
 	Map<Integer, Students> studentList = new HashMap<Integer, Students>();
-	Map<Integer, Course> courseList = new HashMap<Integer, Course>();
+	Map<Integer, Expense> expenseList = new HashMap<Integer, Expense>();
 	Map<Integer, Registrar> registrarList = new HashMap<Integer, Registrar>();
 	// private final AtomicLong counter = new AtomicLong();
 
 	public RegistrationController() {
 		studentList.put(1, new Students(1, "Tom", "Huchtson", "01/01/2000", "tom@123.com"));
-		courseList.put(1, new Course(1, "Course 1"));
+		expenseList.put(1, new Expense(5000.00, "Housing","recurring",30));
 		List<Integer> studentList1 = new ArrayList<>();
 		studentList1.add(1);
 		studentList1.add(2);
@@ -127,16 +127,16 @@ public class RegistrationController {
 
 	// SECTION 2: Course URIs
 	// -------------------------------------------------------------------------------------------------
-	// get course by ID.
-	// Test URL http://localhost:8080/courses/get?id=1
-	@GetMapping(value = "/api/courses/get")
-	public ResponseEntity<?> getCoursebyID(@RequestParam(value = "id") int id) {
-		Course itemToReturn = null;
+	// get expense by ID.
+	// Test URL http://localhost:8080/expense/get?id=1
+	@GetMapping(value = "/api/expense/get")
+	public ResponseEntity<?> getExpensebyID(@RequestParam(value = "id") int id) {
+		Expense itemToReturn = null;
 
-		for (Entry<Integer, Course> entry : courseList.entrySet()) {
+		for (Entry<Integer, Expense> entry : expenseList.entrySet()) {
 			Integer cur_id = entry.getKey();
 			if (cur_id == id) {
-				Course c = courseList.get(id);
+				Expense c = expenseList.get(id);
 				return ResponseEntity.ok(c);
 			}
 		}
@@ -144,57 +144,53 @@ public class RegistrationController {
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
 	}
 
-	// get student by ID.
-	// Test URL http://localhost:8080/courses/getall
-	@GetMapping(value = "/api/courses/getall")
+	// get expense by ID.
+	// Test URL http://localhost:8080/expense/getall
+	@GetMapping(value = "/api/expense/getall")
 	public ResponseEntity<?> getCourseList() {
-		return ResponseEntity.ok(courseList);
+		return ResponseEntity.ok(expenseList);
 	}
 
-	// Create new course,
-	// Test URL http://localhost:8080/courses/add
-	// Test JSON {"course_number":2,"course_title":"Course2"}
-	@PostMapping(value = "/api/courses/add")
-	public ResponseEntity<?> addToCourseList(@Valid @RequestBody Course course) {
-		Integer courseNum = course.getCourse_number();
-		String courseTitle = course.getCourse_title();
+	// Create new expense,
+	// Test URL http://localhost:8080/expense/add
+	@PostMapping(value = "/api/expense/add")
+	public ResponseEntity<?> addToCourseList(@Valid @RequestBody Expense expense) {
+		Double expenseAmount = expense.getAmount();
+		String expenseCategory = expense.getCategory();
+		String expenseFrequency = expense.getFrequency();
+		Integer expenseDate = expense.getDate();
 		String message = null;
 
 		// Validate if all required fields are provided
-		if (courseNum == 0 || courseTitle == null) {
+		if (expenseAmount == 0 || expenseCategory == null || expenseFrequency == null || expenseDate == null) {
 			message = "Please provide all course information";
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
 		}
 		// Passed all validation, add student
 		else {
-			for (Entry<Integer, Course> entry : courseList.entrySet()) {
-				Integer cur_id = entry.getKey();
-				if (cur_id == courseNum) {
-					courseList.put(cur_id, course);
-					message = "Course data updated: Course Name = " + courseTitle;
-				} else {
-					message = "Student added: Course Name = " + courseTitle;
-					courseList.put(courseNum, course);
-				}
+			Integer cur_id = 0;
+			for (Entry<Integer, Expense> entry : expenseList.entrySet()) {
+				cur_id = entry.getKey();
 			}
+			expenseList.put(cur_id+1, expense);
 			return ResponseEntity.ok(message);
 		}
 	}
 
-	// Delete student
-	// Test URL http://localhost:8080/courses/del?id=1
-	@DeleteMapping(value = "/api/courses/del")
-	public ResponseEntity<?> removeCourse(@RequestParam(value = "id") Integer id) {
+	// Delete expense
+	// Test URL http://localhost:8080/expense/del?id=1
+	@DeleteMapping(value = "/api/expense/del")
+	public ResponseEntity<?> removeExpense(@RequestParam(value = "id") Integer id) {
 		String message = null;
-		for (Entry<Integer, Course> entry : courseList.entrySet()) {
+		for (Entry<Integer, Expense> entry : expenseList.entrySet()) {
 			Integer cur_id = entry.getKey();
 			if (cur_id == id) {
-				courseList.remove(id);
-				message = "Course deleted: Course Name = " + entry.getValue().getCourse_title();
+				expenseList.remove(id);
+				message = "Course deleted: Course Name = " + entry.getValue().getCategory()+ " " +entry.getValue().getAmount();
 				return ResponseEntity.ok(message);
 			}
 		}
-		message = "Course not found ";
+		message = "Expense not found ";
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
 	}
 
